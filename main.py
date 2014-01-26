@@ -59,28 +59,58 @@ def photos_getAlbums(usr_id):
 
 def create_record(db,usr_id):
     record={}
-    record['vkid']=usr_id
-    record['users_get']=users_get(usr_id)
-    record['users_getSubscriptions']=users_getSubscriptions(usr_id)    
-    record['wall_get']=wall_get(usr_id)
-    record['groups_get']=groups_get(usr_id)
-    record['friends_get']=friends_get(usr_id)
-    record['photos_getAlbums']=photos_getAlbums(usr_id)
+    try:
+        record['vkid']=usr_id
+        user=users_get(usr_id)
+        if user==False:
+            return True
+        record['users_get']=user
+        record['users_getSubscriptions']=users_getSubscriptions(usr_id)    
+        record['wall_get']=wall_get(usr_id)
+        record['groups_get']=groups_get(usr_id)
+        record['friends_get']=friends_get(usr_id)
+        record['photos_getAlbums']=photos_getAlbums(usr_id)
+    except IOError:
+        import sys
+        sys.exit()
     db.users.save(record)   
+    return True
  
-offset=0
 access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-url="https://api.vk.com/method/users.search?v=5.5&university=477&fields=nickname,screen_name,sex,bdate,city,country,timezone,has_mobile,contacts,education,relation,last_seen,status,can_write_private_message,can_see_all_posts,can_post,universities&offset="
+url="https://api.vk.com/method/users.search?v=5.5&university=477&offset="
 from pymongo import Connection
 connection = Connection()
-db = connection.masht
+db = connection.urfu
 
-for i in range(0,100,20):
-    data = urlopen(url+str(offset)+access_token)
+
+offset=0
+for i in range(0,200,20):
+
+#offset=0
+#for i in range(0,70,20):
+
+#offset=200
+#for i in range(200,400,20):
+
+#offset=400
+#for i in range(400,600,20):
+
+#offset=600
+#for i in range(600,800,20):
+
+#offset=800
+#for i in range(800,980,20):
+
+    try:
+        data = urlopen(url+str(offset)+access_token)
+    except IOError:
+        import sys
+        sys.exit()
     obj=json.load(data)
-    for i in range(20):
-        usr_id=obj['response']['items'][i]['id']
+    for j in range(20):
+        usr_id=obj['response']['items'][j]['id']
         create_record(db,usr_id)
-    offset+=i
+        print i,j
+    offset=i
 
 
