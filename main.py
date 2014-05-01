@@ -1,49 +1,48 @@
 from urllib import urlopen
 import json
-
-
-def users_get(usr_id):
-    access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url = "https://api.vk.com/method/users.get?v=5.5&user_ids="
-    fields = "&fields=sex,education,universities,schools,personal,connections,interests"
-    data = urlopen(url + str(usr_id) + fields + access_token)
-    obj = json.load(data)
-    if obj['response'][0]['first_name'] == u'DELETED':
-        return False
-    return obj['response'][0]
-
-
-def friends_get(usr_id):
-    access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url = "https://api.vk.com/method/friends.get?user_id="
-    fields = "&fields=nickname,education,universities"
-    data = urlopen(url + str(usr_id) + fields + access_token)
-    obj = json.load(data)
-    if u'error' in obj:
-        return False
-    return obj['response']
-
-
-def create_record(db, usr_id):
-    record = {}
-    try:
-        record['vkid'] = usr_id
-        user = users_get(usr_id)
-        if user == False:
-            return True
-        record['users_get'] = user
-        record['friends_get'] = friends_get(usr_id)
-    except IOError:
-        import sys
-
-        sys.exit()
-    db.students.save(record)
-    return True
-
-
-access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-url = "https://api.vk.com/method/users.search?v=5.5&university=477&offset="
 from pymongo import Connection
+import sys
+
+
+class APIWorker(object):
+    def __init__(self, usr_id, access_token, db):
+        self.access_token = access_token
+        self.users_get_url = "https://api.vk.com/method/users.get?v=5.5&user_ids="
+        self.friends_get_url = "https://api.vk.com/method/friends.get?user_id="
+        self.users_get_fields = "&fields=sex,education,universities,schools,personal,connections,interests"
+        self.friends_get_fields = "&fields=nickname,education,universities"
+        self.usr_id = str(usr_id)
+        self.db = db
+        self.create_record()
+
+    def users_get(self):
+        data = urlopen(self.users_get_url + self.usr_id + self.users_get_fields + self.access_token)
+        obj = json.load(data)
+        if obj['response'][0]['first_name'] == u'DELETED':
+            return False
+        return obj['response'][0]
+
+    def friends_get(self):
+        data = urlopen(self.friends_get_url + self.usr_id + self.friends_get_fields + self.access_token)
+        obj = json.load(data)
+        if u'error' in obj:
+            return False
+        return obj['response']
+
+    def create_record(self):
+        record = {}
+        try:
+            record['vkid'] = self.usr_id
+            user = self.users_get()
+            if user == False:
+                return True
+            record['users_get'] = user
+            record['friends_get'] = self.friends_get()
+        except IOError:
+            sys.exit()
+        self.db.students.save(record)
+        return True
+
 
 connection = Connection()
 db = connection.urfu
@@ -61,13 +60,12 @@ for s in sex:
         offset = 0
         for i in range(0, 1000, 20):
             try:
-                data = urlopen(url + university_year + str(y) + fsex + str(s) + foffset + str(offset) + access_token)
+                data = urlopen(url + university_year + str(y) + fsex +
+                               str(s) + foffset + str(offset) + access_token)
             except IOError:
-                import sys
-
                 sys.exit()
             obj = json.load(data)
             for item in obj['response']['items']:
                 usr_id = item['id']
-                create_record(db, usr_id)
+                APIWorker(usr_id, access_token, db)
             offset = i
