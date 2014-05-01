@@ -1,116 +1,73 @@
 from urllib import urlopen
 import json
+
+
 def users_get(usr_id):
-    access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url="https://api.vk.com/method/users.get?v=5.5&user_ids="
-    fields="&fields=sex,bdate,city,country,photo_200_orig,online,online_mobile,lists,domain,has_mobile,contacts,connections,site,education,universities,schools,can_post,can_see_all_posts,can_see_audio,can_write_private_message,status,last_seen,relation,relatives,counters"
-    data = urlopen(url+str(usr_id)+fields+access_token)
-    obj=json.load(data)
-    if obj['response'][0]['first_name']==u'DELETED':
+    access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
+    url = "https://api.vk.com/method/users.get?v=5.5&user_ids="
+    fields = "&fields=sex,education,universities,schools,personal,connections,interests"
+    data = urlopen(url + str(usr_id) + fields + access_token)
+    obj = json.load(data)
+    if obj['response'][0]['first_name'] == u'DELETED':
         return False
-    return obj['response'][0]   
+    return obj['response'][0]
 
-def users_getSubscriptions(usr_id):
-    access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url="https://api.vk.com/method/users.getSubscriptions?user_id="
-    fields="&extended=1&count=100&v=5.7&fields=city,country,place,description,members_count,counters,start_date,end_date,can_post,can_see_all_posts,activity,status,contacts,links,fixed_post,verified,site,can_create_topic"
-    data = urlopen(url+str(usr_id)+fields+access_token)
-    obj=json.load(data)     
-    if obj['response']['count']==0:
-        return False
-    return obj['response']   
-
-def wall_get(usr_id):
-    access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url="https://api.vk.com/method/wall.get?owner_id="
-    fields="&count=100"
-    data = urlopen(url+str(usr_id)+fields+access_token)
-    obj=json.load(data)      
-    if 'error' in obj:
-        return False
-    return obj['response']
-
-def groups_get(usr_id):
-    access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url="https://api.vk.com/method/groups.get?user_id="
-    fields="&v=5.7&fields=city,country,place,description,wiki_page,members_count,counters,start_date,end_date,can_post,can_see_all_posts,activity,status,contacts,links,fixed_post,verified,site,can_create_topic&extended=1"
-    data = urlopen(url+str(usr_id)+fields+access_token)
-    obj=json.load(data)   
-    if u'error' in obj:
-        return False   
-    return obj['response']
 
 def friends_get(usr_id):
-    access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url="https://api.vk.com/method/friends.get?user_id="
-    fields="&fields=nickname,domain,sex,bdate,city,country,timezone,has_mobile,contacts,education,online,relation,last_seen,status,can_write_private_message,can_see_all_posts,can_post,universities"
-    data = urlopen(url+str(usr_id)+fields+access_token)
-    obj=json.load(data) 
+    access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
+    url = "https://api.vk.com/method/friends.get?user_id="
+    fields = "&fields=nickname,education,universities"
+    data = urlopen(url + str(usr_id) + fields + access_token)
+    obj = json.load(data)
     if u'error' in obj:
-        return False 
+        return False
     return obj['response']
 
-def photos_getAlbums(usr_id):
-    access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-    url="https://api.vk.com/method/photos.getAlbums?user_id="
-    data = urlopen(url+str(usr_id)+access_token)
-    obj=json.load(data) 
-    return obj
 
-def create_record(db,usr_id):
-    record={}
+def create_record(db, usr_id):
+    record = {}
     try:
-        record['vkid']=usr_id
-        user=users_get(usr_id)
-        if user==False:
+        record['vkid'] = usr_id
+        user = users_get(usr_id)
+        if user == False:
             return True
-        record['users_get']=user
-        record['users_getSubscriptions']=users_getSubscriptions(usr_id)    
-        record['wall_get']=wall_get(usr_id)
-        record['groups_get']=groups_get(usr_id)
-        record['friends_get']=friends_get(usr_id)
-        record['photos_getAlbums']=photos_getAlbums(usr_id)
+        record['users_get'] = user
+        record['friends_get'] = friends_get(usr_id)
     except IOError:
         import sys
+
         sys.exit()
-    db.users.save(record)   
+    db.students.save(record)
     return True
- 
-access_token="&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
-url="https://api.vk.com/method/users.search?v=5.5&university=477&offset="
+
+
+access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
+url = "https://api.vk.com/method/users.search?v=5.5&university=477&offset="
 from pymongo import Connection
+
 connection = Connection()
 db = connection.urfu
 
+access_token = "&access_token=bae62b9c62a99fe2cd04ca0bdf0d68c3f55192c93d7979e9cde1eea3bb6a45a3decbf52dd1f3d6881468d"
+url = "https://api.vk.com/method/users.search?v=5.5&university=477"
+foffset = "&offset="
+university_year = "&university_year="
+fsex = "&sex="
+year = [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+sex = [1, 2]
+offset = 0
+for s in sex:
+    for y in year:
+        offset = 0
+        for i in range(0, 1000, 20):
+            try:
+                data = urlopen(url + university_year + str(y) + fsex + str(s) + foffset + str(offset) + access_token)
+            except IOError:
+                import sys
 
-offset=0
-for i in range(0,200,20):
-
-#offset=0
-#for i in range(0,70,20):
-
-#offset=200
-#for i in range(200,400,20):
-
-#offset=400
-#for i in range(400,600,20):
-
-#offset=600
-#for i in range(600,800,20):
-
-#offset=800
-#for i in range(800,980,20):
-
-    try:
-        data = urlopen(url+str(offset)+access_token)
-    except IOError:
-        import sys
-        sys.exit()
-    obj=json.load(data)
-    for j in range(20):
-        usr_id=obj['response']['items'][j]['id']
-        create_record(db,usr_id)
-        print i,j
-    offset=i
-
-
+                sys.exit()
+            obj = json.load(data)
+            for item in obj['response']['items']:
+                usr_id = item['id']
+                create_record(db, usr_id)
+            offset = i
